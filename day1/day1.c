@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -136,25 +135,50 @@ int part1(struct Report *report) {
 }
 
 
+int window(struct Report *report, int pos) {
+	int *es = report->entries + pos;
+	return es[0] + es[1] + es[2];
+}
+
+int part2(struct Report *report) {
+	size_t increments = 0;
+	for (size_t pos = 3; pos < report->count; ++pos) {
+		int prev = window(report, pos-3);
+		int curr = window(report, pos-2);
+		if (curr > prev) 
+			increments++;
+	}
+	return increments;
+}
+
 // ----------------------------------------------
 // tests
 
-void test(const char *input, int part1_expect) {
+void test(const char *input, int (*f)(struct Report *), int expect) {
 	struct Report *report = read_report(string_reader(input));
-	int increments = part1(report);
+	int actual = f(report);
 	free(report);
-	assert(increments == part1_expect);
+	if (actual != expect) {
+		fprintf(stderr, "test failed input='%s' expect=%d actual=%d\n",
+			input, expect, actual);
+		abort();
+	}
 }
 
 
 // ----------------------------------------------
 
+static const char test_data[] = 
+	"199\n200\n208\n210\n200\n207\n240\n269\n260\n263";
+
 int main() {
-	test("199\n200\n208\n210\n200\n207\n240\n269\n260\n263", 7);
+	test(test_data, part1, 7);
+	test(test_data, part2, 5);
 
 	struct Report *report = read_report(file_reader("day1/input.txt"));
 
 	printf("Part 1: %d\n", part1(report));
+	printf("Part 2: %d\n", part2(report));
 
 	free(report);
 	return 0;
