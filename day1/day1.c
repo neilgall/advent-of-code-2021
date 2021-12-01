@@ -109,7 +109,9 @@ struct Report *read_report(struct Reader *reader) {
 			entry = (entry * 10) + (c - '0');
 			entry_digits += 1;
 		} else {
-			append_entry(&report, entry);
+			if (entry_digits > 0) {
+				append_entry(&report, entry);
+			}
 			entry = 0;
 			entry_digits = 0;
 		}
@@ -169,7 +171,7 @@ void test(const char *input, int (*f)(struct Report *), int expect) {
 // ----------------------------------------------
 
 static const char test_data[] = 
-	"199\n200\n208\n210\n200\n207\n240\n269\n260\n263";
+	"199\n200 208  210 200 207   240 269 260\n263";
 
 int main() {
 	test(test_data, part1, 7);
