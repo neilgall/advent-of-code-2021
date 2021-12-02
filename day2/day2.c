@@ -77,6 +77,8 @@ struct Course *parse_course(struct Reader *reader) {
 		add_instruction(next, direction, amount);
 	}
 
+	reader->delete(reader);
+
 	return course;
 }
 
