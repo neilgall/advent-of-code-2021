@@ -22,11 +22,6 @@ struct Course {
 	struct Course *next;
 };
 
-struct Position {
-	int horizontal;
-	int depth;
-};
-
 struct Course **add_instruction(struct Course **next, enum Direction direction, int amount) {
 	struct Course *step = (struct Course *)malloc(sizeof(struct Course));
 	step->instruction.direction = direction;
@@ -93,6 +88,15 @@ void delete_course(struct Course *course) {
 	}
 }
 
+
+// ----------------------------------------------
+// Part 1
+
+struct Position {
+	int horizontal;
+	int depth;
+};
+
 struct Position follow_course(struct Course *course) {
 	struct Position pos = { .horizontal = 0, .depth = 0 };
 	for (; course; course = course->next) {
@@ -111,11 +115,42 @@ struct Position follow_course(struct Course *course) {
 	return pos;
 }
 
-// ----------------------------------------------
-// Problems
-
 int part1(struct Course *course) {
 	struct Position pos = follow_course(course);
+	return pos.horizontal * pos.depth;
+}
+
+
+// ----------------------------------------------
+// Part 2
+
+struct Position2 {
+	int horizontal;
+	int depth;
+	int aim;
+};
+
+struct Position2 follow_course2(struct Course *course) {
+	struct Position2 pos = { .horizontal = 0, .depth = 0, .aim = 0 };
+	for (; course; course = course->next) {
+		switch (course->instruction.direction) {
+			case FORWARD:
+				pos.horizontal += course->instruction.amount;
+				pos.depth += pos.aim * course->instruction.amount;
+				break;
+			case DOWN:
+				pos.aim += course->instruction.amount;
+				break;
+			case UP:
+				pos.aim -= course->instruction.amount;
+				break;
+		}
+	}
+	return pos;
+}
+
+int part2(struct Course *course) {
+	struct Position2 pos = follow_course2(course);
 	return pos.horizontal * pos.depth;
 }
 
@@ -138,10 +173,12 @@ static const char test_data[] = "forward 5\ndown 5\nforward 8\nup 3\ndown 8\nfor
 
 int main() {
 	test(test_data, part1, 150);
+	test(test_data, part2, 900);
 
 	struct Course *course = parse_course(file_reader("day2/input.txt"));
 
 	printf("Part 1: %d\n", part1(course));
+	printf("Part 2: %d\n", part2(course));
 
 	delete_course(course);
 	return 0;
