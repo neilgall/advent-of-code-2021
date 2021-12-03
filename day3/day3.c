@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include "reader.h"
+#include "measure.h"
 
 // ----------------------------------------------
 // Report structure
@@ -131,7 +132,6 @@ unsigned oxygen_generator_rating(struct Report *report) {
 
 	keep_all_entries(report);
 	while (bit_pos-- > 0 && remaining > 1) {
-		printf("bit %d remaining %u\n", bit_pos, remaining);
 		unsigned bit = 1 << bit_pos;
 		size_t ones = ones_in_bit_position(report, bit);
 		unsigned keep = (ones * 2 >= remaining) ? 1 : 0;
@@ -185,6 +185,11 @@ void tests() {
 	test(test_data, part2, 230);
 }
 
+void run(struct Report *report) {
+	part1(report);
+	part2(report);
+}
+
 // ----------------------------------------------
 // Main
 
@@ -195,6 +200,8 @@ int main() {
 
 	printf("Part 1: %d\n", part1(report));
 	printf("Part 2: %d\n", part2(report));
+	printf("Execution time: %.6f\n", measure(1000, (measure_f)run, report));
 
+	free(report);
 	return 0;
 }

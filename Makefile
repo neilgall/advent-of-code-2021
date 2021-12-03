@@ -1,5 +1,6 @@
 
 ALL := $(shell ls -d day*)
+LIBS := $(subst .c,.o,$(shell ls lib/*.c))
 
 .PHONY: all
 all: $(ALL)
@@ -12,8 +13,9 @@ clean:
 %.o: %.c
 	gcc -c -o $@ -I ./lib $^
 
-%.run: %.o lib/reader.o
+%.run: %.o $(LIBS)
 	gcc -o $@ $^
+
 
 day1: day1/day1.run
 	$^
