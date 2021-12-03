@@ -1,17 +1,16 @@
+#include <assert.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 #include "reader.h"
 #include "measure.h"
 
 // ----------------------------------------------
 // Report structure
 
-typedef struct entry {
-	uint16_t value;
-	uint8_t keep;
-} entry_t;
+typedef uint16_t entry_t;
 
 struct Report {
 	size_t capacity;
@@ -43,20 +42,27 @@ void append_entry(struct Report **report_p, entry_t entry, size_t length) {
 	report->entries[report->count++] = entry;
 }
 
+struct Report *copy_report(struct Report *report) {
+	size_t size = report_size(report->count);
+	struct Report *copy = (struct Report *)malloc(size);
+	memcpy(copy, report, size);
+	return copy;
+}
+
 struct Report *read_report(struct Reader *reader) {
 	struct Report *report = empty_report(100);
-	struct entry entry = { .value = 0, .keep = 1 };
+	entry_t entry = 0;
 	size_t length = 0;
 	char c;
 	while ((c = reader->next(reader)) != 0) {
 		if (isdigit(c)) {
-			entry.value = (entry.value << 1) + (c - '0');
+			entry = (entry << 1) + (c - '0');
 			length += 1;
 		} else {
 			if (length > 0) {
 				append_entry(&report, entry, length);
 			}
-			entry.value = 0;
+			entry = 0;
 			length = 0;
 		}
 	}
@@ -74,7 +80,7 @@ struct Report *read_report(struct Reader *reader) {
 size_t ones_in_bit_position(struct Report *report, unsigned bit) {
 	size_t ones = 0;
 	for (size_t e = 0; e < report->count; ++e) {
-		if (report->entries[e].keep && report->entries[e].value & bit)
+		if (report->entries[e] & bit)
 			ones++;
 	}
 	return ones;	
@@ -97,69 +103,61 @@ int part1(struct Report *report) {
 }
 
 
-void keep_all_entries(struct Report *report) {
+void discard_entries(struct Report **report_p, unsigned bit, unsigned keep) {
+	struct Report *report = *report_p;
+	struct Report *new_report = empty_report(report->count / 2);
 	for (size_t i = 0; i < report->count; ++i) {
-		report->entries[i].keep = 1;
-	}
-}
-
-
-size_t discard_entries(struct Report *report, unsigned bit, unsigned discard) {
-	size_t discarded = 0;
-	for (size_t i = 0; i < report->count; ++i) {
-		if (report->entries[i].keep &&
-				!(report->entries[i].value & bit) == discard) {
-			report->entries[i].keep = 0;
-			discarded++;
+		if (!!(report->entries[i] & bit) == keep) {
+			append_entry(&new_report, report->entries[i], report->entry_length);
 		}
 	}
-	return discarded;
+	free(report);
+	*report_p = new_report;
 }
 
 
-unsigned first_kept_entry(struct Report *report) {
-	for (size_t i = 0; i < report->count; ++i) {
-		if (report->entries[i].keep)
-			return report->entries[i].value;
-	}
-	abort();
-}
-
-
-unsigned oxygen_generator_rating(struct Report *report) {
-	size_t remaining = report->count;
+unsigned oxygen_generator_rating(struct Report **report_p) {
+	struct Report *report = *report_p;
 	size_t bit_pos = report->entry_length;
 
-	keep_all_entries(report);
-	while (bit_pos-- > 0 && remaining > 1) {
+	while (bit_pos-- > 0 && report->count > 1) {
 		unsigned bit = 1 << bit_pos;
 		size_t ones = ones_in_bit_position(report, bit);
-		unsigned keep = (ones * 2 >= remaining) ? 1 : 0;
-		remaining -= discard_entries(report, bit, !keep);
+		unsigned keep = (ones * 2 >= report->count) ? 1 : 0;
+		discard_entries(&report, bit, keep);
 	}
 
-	return first_kept_entry(report);
+	*report_p = report;
+	assert(report->count == 1);
+	return report->entries[0];
 }
 
 
-unsigned co2_scrubber_rating(struct Report *report) {
-	size_t remaining = report->count;
+unsigned co2_scrubber_rating(struct Report **report_p) {
+	struct Report *report = *report_p;
 	size_t bit_pos = report->entry_length;
 
-	keep_all_entries(report);
-	while (bit_pos-- > 0 && remaining > 1) {
+	while (bit_pos-- > 0 && report->count > 1) {
 		unsigned bit = 1 << bit_pos;
 		size_t ones = ones_in_bit_position(report, bit);
-		unsigned keep = (ones * 2 < remaining) ? 1 : 0;
-		remaining -= discard_entries(report, bit, !keep);
+		unsigned keep = (ones * 2 < report->count) ? 1 : 0;
+		discard_entries(&report, bit, keep);
 	}
 
-	return first_kept_entry(report);
+	*report_p = report;
+	assert(report->count == 1);
+	return report->entries[0];
 }
 
 
 int part2(struct Report *report) {
-	return oxygen_generator_rating(report) * co2_scrubber_rating(report);
+	struct Report *copy = copy_report(report);
+	unsigned o2 = oxygen_generator_rating(&copy);
+	free(copy);
+	copy = copy_report(report);
+	unsigned co2 = co2_scrubber_rating(&copy);
+	free(copy);
+	return o2 * co2;
 }
 
 
