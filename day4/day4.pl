@@ -72,35 +72,54 @@ score_board([R|Rs], S) :-
 
 %% game
 
-win(Draw, Boards, Score) :-
-	tfilter(winning_board, Boards, [Win]),
+win_score(Draw, Win, Score) :-
 	score_board(Win, S),
 	Score is Draw * S.
 
-game([D|Ds], Boards, Score) :-
+win(Draw, Boards, BoardsLeft, Scores) :-
+	tfilter(winning_board, Boards, Wins),
+	maplist(win_score(Draw), Wins, Scores),
+	foldl(select, Wins, Boards, BoardsLeft).
+
+game([D|Ds], Boards, Scores) :-
 	match_boards(D, Boards, NextBoards),
-	(win(D, NextBoards, Score), !; game(Ds, NextBoards, Score)).
+	(win(D, NextBoards, BoardsLeft, WinScores),
+		game(Ds, BoardsLeft, MoreScores),
+		append(WinScores, MoreScores, Scores), !;
+	 game(Ds, NextBoards, Scores)).
 
-game([], _, 0).
-
-
-
-%% tests
-
-test_game :-
-	load('test.txt', Draw, Boards),
-	game(Draw, Boards, Score),
-	Score is 4512.
+game([], _, []).
 
 
 %% problems
 
 part1(Draw, Boards, Score) :-
-	game(Draw, Boards, Score).
+	game(Draw, Boards, [Score|_]), !.
+
+part2(Draw, Boards, LastScore) :-
+	game(Draw, Boards, Scores),
+	reverse(Scores, [LastScore|_]), !.
+
+
+%% tests
+
+test_part1 :-
+	load('test.txt', Draw, Boards),
+	part1(Draw, Boards, Score),
+	Score is 4512.
+
+test_part2 :-
+	load('test.txt', Draw, Boards),
+	part2(Draw, Boards, Score),
+	Score is 1924.
+
 
 main :-
-	test_game,
+	test_part1,
+	test_part2,
 	load('input.txt', Draw, Boards),
 	part1(Draw, Boards, Part1),
-	write('Part 1 : '), write(Part1), nl.
+	write('Part 1 : '), write(Part1), nl,
+	part2(Draw, Boards, Part2),
+	write('Part 2 : '), write(Part2), nl.
 
