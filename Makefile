@@ -25,3 +25,7 @@ day2: day2/day2.run
 
 day3: day3/day3.run
 	$^
+
+.PHONY: day4
+day4:
+	(cd day4; echo 'main.' | scryer-prolog day4.pl)
