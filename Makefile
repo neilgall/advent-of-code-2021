@@ -28,4 +28,5 @@ day3: day3/day3.run
 
 .PHONY: day4
 day4:
-	(cd day4; echo 'main.' | scryer-prolog day4.pl)
+	(cd day4; scryer-prolog day4 -g main -g halt)
+
