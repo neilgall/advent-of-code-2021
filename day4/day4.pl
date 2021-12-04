@@ -76,17 +76,16 @@ win_score(Draw, Win, Score) :-
 	score_board(Win, S),
 	Score is Draw * S.
 
-win(Draw, Boards, BoardsLeft, Scores) :-
+wins(Draw, Boards, BoardsLeft, Scores) :-
 	tfilter(winning_board, Boards, Wins),
 	maplist(win_score(Draw), Wins, Scores),
 	foldl(select, Wins, Boards, BoardsLeft).
 
 game([D|Ds], Boards, Scores) :-
 	match_boards(D, Boards, NextBoards),
-	(win(D, NextBoards, BoardsLeft, WinScores),
-		game(Ds, BoardsLeft, MoreScores),
-		append(WinScores, MoreScores, Scores), !;
-	 game(Ds, NextBoards, Scores)).
+	wins(D, NextBoards, BoardsLeft, WinScores),
+	game(Ds, BoardsLeft, MoreScores),
+	append(WinScores, MoreScores, Scores).
 
 game([], _, []).
 
