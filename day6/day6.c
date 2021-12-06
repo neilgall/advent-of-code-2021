@@ -8,18 +8,20 @@
 // ----------------------------------------------
 // Model
 
+typedef unsigned long count_t;
+
 struct Fish {
-	int count[9];
+	count_t count[9];
 };
 
-void increment_count(struct Fish *fish, int value) {
+void increment_count(struct Fish *fish, count_t value) {
 	assert(0 <= value && value < 9);
 	fish->count[value] += 1;
 }
 
-int total_fish(struct Fish *fish) {
-	int total = 0;
-	for (int i = 0; i < 9; ++i) {
+count_t total_fish(struct Fish *fish) {
+	count_t total = 0;
+	for (size_t i = 0; i < 9; ++i) {
 		total += fish->count[i];
 	}
 	return total;
@@ -38,33 +40,40 @@ void read_input(struct Reader *reader, struct Fish *fish) {
 
 
 // ----------------------------------------------
+
+void iterate(struct Fish *fish) {
+	count_t new_fish = fish->count[0];
+	for (size_t i = 0; i < 8; ++i) {
+		fish->count[i] = fish->count[i+1];
+	}
+	fish->count[6] += new_fish;
+	fish->count[8] = new_fish;	
+}
  
-int part1(struct Fish fish) {
-	for (int day = 0; day < 80; ++day) {
-		int new_fish = fish.count[0];
-		for (int i = 0; i < 8; ++i) {
-			fish.count[i] = fish.count[i+1];
-		}
-		fish.count[6] += new_fish;
-		fish.count[8] = new_fish;
+count_t part1(struct Fish fish) {
+	for (size_t day = 0; day < 80; ++day) {
+		iterate(&fish);
 	}
 	return total_fish(&fish);
 }
 
 
-int part2(struct Fish fish) {
-	return 0;
+count_t part2(struct Fish fish) {
+	for (size_t day = 0; day < 256; ++day) {
+		iterate(&fish);
+	}
+	return total_fish(&fish);
 }
 
 // ----------------------------------------------
 // tests
 
-void test(const char *input, int (*f)(struct Fish), int expect) {
+void test(const char *input, count_t (*f)(struct Fish), count_t expect) {
 	struct Fish fish;
 	read_input(string_reader(input), &fish);
-	int actual = f(fish);
+	count_t actual = f(fish);
 	if (actual != expect) {
-		fprintf(stderr, "test failed input='%s' expect=%d actual=%d\n",
+		fprintf(stderr, "test failed input='%s' expect=%lu actual=%lu\n",
 			input, expect, actual);
 		abort();
 	}
@@ -78,13 +87,13 @@ static const char test_data[] =
 
 int main() {
 	test(test_data, part1, 5934);
-	test(test_data, part2, 0);
+	test(test_data, part2, 26984457539);
 
 	struct Fish fish;
 	read_input(file_reader("day6/input.txt"), &fish);
 
-	printf("Part 1: %d\n", part1(fish));
-	printf("Part 2: %d\n", part2(fish));
+	printf("Part 1: %lu\n", part1(fish));
+	printf("Part 2: %lu\n", part2(fish));
 
 	return 0;
 }
