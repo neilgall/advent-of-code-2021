@@ -9,7 +9,7 @@ all: $(ALL)
 clean:
 	find . -name *.run -exec rm -f {} \;
 	find . -name *.o -exec rm -f {} \;
-	find . -name .venv -exec rm =rf {} \;
+	find . -name .venv -exec rm -rf {} \;
 
 
 # C build/run rules

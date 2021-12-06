@@ -42,17 +42,31 @@ def line_points(line):
     return ((line.xs[0], y) for y in line.ys)
   elif len(line.ys) == 1:
     return ((x, line.ys[0]) for x in line.xs)
+  elif len(line.xs) == len(line.ys):
+    if line.ys[1] > line.ys[0]:
+      y0 = np.min(line.ys)
+      return ((x, y0 + y) for y,x in enumerate(line.xs))
+    else:
+      yN = np.max(line.ys)
+      return ((x, yN - y) for y,x in enumerate(line.xs))
   else:
-    raise Exception("h or v only for part1")
+    raise Exception("line must be horizontal, vertical or 45 degrees")
+
+
+def count_intersection_points(lines):
+  points = defaultdict(int)
+  for line in lines:
+    for p in line_points(line):
+      points[p] += 1
+  return sum(1 for p,n in points.items() if n >= 2)
 
 
 def part1(lines):
   h_or_v_lines = [l for l in lines if is_h_or_v(l)]
-  points = defaultdict(int)
-  for line in h_or_v_lines:
-    for p in line_points(line):
-      points[p] += 1
-  return sum(1 for p,n in points.items() if n > 1)
+  return count_intersection_points(h_or_v_lines)
+
+def part2(lines):
+  return count_intersection_points(lines)
 
 
 # ----------------------------
@@ -84,6 +98,17 @@ def test_is_h_or_v(input, h_or_v):
   assert is_h_or_v(line) == h_or_v
 
 
+@pytest.mark.parametrize(
+  'input,points', [
+    ("0,9 -> 5,9", {(0,9),(1,9),(2,9),(3,9),(4,9),(5,9)}),
+    ("9,4 -> 9,8", {(9,4),(9,5),(9,6),(9,7),(9,8)}),
+    ("8,0 -> 0,8", {(8,0),(7,1),(6,2),(5,3),(4,4),(3,5),(2,6),(1,7),(0,8)})
+  ]
+)
+def test_line_points(input, points):
+  line = parse(input)
+  assert set(line_points(line)) == points
+
 
 @pytest.fixture
 def example_data():
@@ -102,10 +127,15 @@ def example_data():
 def test_part1(example_data):
   assert part1(example_data) == 5
 
+def test_part2(example_data):
+  assert part2(example_data) == 12
+
+
 # ----------------------------
 # Start
 
 if __name__ == "__main__":
   with open("input.txt") as f:
-    lines = (parse(line) for line in f.readlines())
+    lines = [parse(line) for line in f.readlines()]
     print(f"Part 1: {part1(lines)}")
+    print(f"Part 2: {part2(lines)}")
