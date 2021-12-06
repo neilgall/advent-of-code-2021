@@ -9,6 +9,10 @@ all: $(ALL)
 clean:
 	find . -name *.run -exec rm -f {} \;
 	find . -name *.o -exec rm -f {} \;
+	find . -name .venv -exec rm =rf {} \;
+
+
+# C build/run rules
 
 %.o: %.c
 	gcc -c -o $@ -I ./lib $^
@@ -16,6 +20,15 @@ clean:
 %.run: %.o $(LIBS)
 	gcc -o $@ $^
 
+
+# Python build/run rules
+
+%/.venv:
+	cd `dirname $@` && virtualenv --python=python3 .venv
+	source $@/bin/activate && pip install -r `dirname $@`/requirements.txt
+
+
+# Individual day targets
 
 day1: day1/day1.run
 	$^
@@ -26,7 +39,9 @@ day2: day2/day2.run
 day3: day3/day3.run
 	$^
 
-.PHONY: day4
-day4:
+day4: day4/day4.pl
 	(cd day4; scryer-prolog day4 -g main -g halt)
 
+.PHONY: day5
+day5: day5/.venv day5/day5.py
+	(source $^/bin/activate; cd $@; pytest -v $@.py; python $@.py)
