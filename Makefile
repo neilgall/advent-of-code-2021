@@ -15,7 +15,7 @@ clean:
 # C build/run rules
 
 %.o: %.c
-	gcc -c -o $@ -I ./lib $^
+	gcc -g -c -o $@ -I ./lib $^
 
 %.run: %.o $(LIBS)
 	gcc -o $@ $^
@@ -44,4 +44,8 @@ day4: day4/day4.pl
 
 .PHONY: day5
 day5: day5/.venv day5/day5.py
-	(source $^/bin/activate; cd $@; pytest -v $@.py; python $@.py)
+	(source day5/.venv/bin/activate; cd $@; pytest -v $@.py; python $@.py)
+
+.PRECIOUS: day6/day6.run
+day6: day6/day6.run
+	$^
