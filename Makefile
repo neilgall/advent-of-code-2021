@@ -25,7 +25,7 @@ clean:
 
 %/.venv:
 	cd `dirname $@` && virtualenv --python=python3 .venv
-	source $@/bin/activate && pip install -r `dirname $@`/requirements.txt
+	$@/bin/pip install -r `dirname $@`/requirements.txt
 
 
 # Individual day targets
@@ -44,8 +44,7 @@ day4: day4/day4.pl
 
 .PHONY: day5
 day5: day5/.venv day5/day5.py
-	(source day5/.venv/bin/activate; cd $@; pytest -v $@.py; python $@.py)
+	(cd $@; .venv/bin/pytest -v $@.py; .venv/bin/python $@.py)
 
-.PRECIOUS: day6/day6.run
 day6: day6/day6.run
 	$^

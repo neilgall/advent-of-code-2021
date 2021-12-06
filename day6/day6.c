@@ -82,8 +82,7 @@ void test(const char *input, count_t (*f)(struct Fish), count_t expect) {
 
 // ----------------------------------------------
 
-static const char test_data[] = 
-	"3,4,3,1,2";
+static const char test_data[] = "3,4,3,1,2";
 
 int main() {
 	test(test_data, part1, 5934);
