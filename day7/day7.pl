@@ -30,6 +30,30 @@ part1(Positions, Fuel) :-
 	min_list(Fs, Fuel).
 
 
+%% part 2
+
+sum_to_n(N, S) :- 
+	N1 #= N + 1,
+	S1 #= N * N1,
+	S #= S1 // 2.
+
+fuel2([], _, 0).
+fuel2([P|Ps], Target, Fuel) :-
+	fuel2(Ps, Target, F1),
+	D #= Target - P,
+	D1 #= abs(D),
+	sum_to_n(D1, F),
+	Fuel #= F + F1.
+
+fuel_candidates2(Positions, Fuel) :-
+	member(Target, Positions),
+	fuel2(Positions, Target, Fuel).
+
+part2(Positions, Fuel) :-
+	findall(F, fuel_candidates2(Positions, F), Fs),
+	min_list(Fs, Fuel).
+
+
 %% tests
 
 test_data(Positions) :-
@@ -46,6 +70,8 @@ test_part1 :-
 
 main :- 
 	phrase_from_file(list_of_numbers(Positions), `input.txt`),
-	part1(Positions, Fuel),
-	write('Part 1 : '), write(Fuel), nl,
+	part1(Positions, Fuel1),
+	write('Part 1 : '), write(Fuel1), nl,
+	part2(Positions, Fuel2),
+	write('Part 2 : '), write(Fuel2), nl,
 	halt(0).
