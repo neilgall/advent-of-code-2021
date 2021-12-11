@@ -48,3 +48,6 @@ day5: day5/.venv day5/day5.py
 
 day6: day6/day6.run
 	$^
+
+day7: day7/day7.pl
+	(cd day7; swipl -f -q day7.pl)
