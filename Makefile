@@ -7,9 +7,9 @@ all: $(ALL)
 
 .PHONY: clean`
 clean:
-	find . -name *.run -exec rm -f {} \;
-	find . -name *.o -exec rm -f {} \;
-	find . -name .venv -exec rm -rf {} \;
+	-find . -name *.run -exec rm -f {} \;
+	-find . -name *.o -exec rm -f {} \;
+	-find . -name .venv -exec rm -rf {} \;
 
 
 # C build/run rules
@@ -51,3 +51,6 @@ day6: day6/day6.run
 
 day7: day7/day7.pl
 	(cd day7; swipl -f -q day7.pl)
+
+day8: day8/day8.hs
+	(cd day8; swipl -f -q day8.pl)
