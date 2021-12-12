@@ -54,3 +54,6 @@ day7: day7/day7.pl
 
 day8: day8/day8.hs
 	(cd day8; swipl -f -q day8.pl)
+
+day9: day9/day9.run
+	$^
