@@ -40,7 +40,7 @@ day3: day3/day3.run
 	$^
 
 day4: day4/day4.pl
-	(cd day4; scryer-prolog day4 -g main -g halt)
+	(cd day4; swipl -f -q day4.pl)
 
 .PHONY: day5
 day5: day5/.venv day5/day5.py
@@ -49,9 +49,11 @@ day5: day5/.venv day5/day5.py
 day6: day6/day6.run
 	$^
 
+.PHONY: day7
 day7: day7/day7.pl
 	(cd day7; swipl -f -q day7.pl)
 
+.PHONY: day8
 day8: day8/day8.hs
 	(cd day8; swipl -f -q day8.pl)
 
@@ -60,4 +62,4 @@ day9: day9/day9.run
 
 .PHONY: day10
 day10: day10/day10.py
-	(cd $@; python $@.py)
+	(cd $@; python3 $@.py)
