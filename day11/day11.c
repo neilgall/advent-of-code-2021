@@ -190,13 +190,22 @@ int part1(const struct map *map) {
 	return flashes;
 }
 
+int part2(const struct map *map) {
+	struct map *copy = copy_map(map);
+	int steps = 1;
+	while (step_map(copy) != 100) {
+		steps++;
+	}
+	free(copy);
+	return steps;
+}
 
 // tests
 
 void tests() {
 	struct map *map = read_map(file_reader("day11/example.txt"));
 	assert(part1(map) == 1656);
-	// assert(part2(map) == 1134);
+	assert(part2(map) == 195);
 	free(map);
 }
 
@@ -206,7 +215,7 @@ int main() {
 
 	struct map *map = read_map(file_reader("day11/input.txt"));
 	printf("Part 1: %lu\n", part1(map));
-	// printf("Part 2: %lu\n", part2(map));
+	printf("Part 2: %lu\n", part2(map));
 	free(map);
 
 	return 0;
