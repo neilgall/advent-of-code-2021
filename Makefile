@@ -61,3 +61,6 @@ day9: day9/day9.run
 .PHONY: day10
 day10: day10/day10.py
 	(cd $@; python $@.py)
+
+day11: day11/day11.run
+	$^
