@@ -1,17 +1,11 @@
 :- use_module(library(charsio)).
-:- use_module(library(dcgs)).
+:- use_module(library(clpfd)).
+:- use_module(library(dcg/basics)).
 :- use_module(library(lists)).
 :- use_module(library(pio)).
-:- use_module(library(reif)).
+:- initialization main.
 
 %% parsing
-
-digit(D) --> [D], { char_type(D, decimal_digit) }.
-
-digits([D|Ds]) --> digit(D), digits(Ds), !.
-digits([D])    --> digit(D).
-
-number(N) --> digits(Ds), { number_chars(N, Ds) }.
 
 draw([N|Ns]) --> number(N), ",", draw(Ns), !.
 draw([N])    --> number(N).
@@ -19,10 +13,8 @@ draw([N])    --> number(N).
 board([R|Rs]) --> row(R), "\n", board(Rs), !.
 board([R])    --> row(R).
 
-row([N|Ns]) --> whitespace, number(N), row(Ns), !.
-row([N])    --> whitespace, number(N).
-
-whitespace --> "  ", !; " ", !; "", !.
+row([N|Ns]) --> whites, number(N), row(Ns), !.
+row([N])    --> whites, number(N).
 
 boards([B|Bs]) --> board(B), "\n\n", boards(Bs), !.
 boards([B])    --> board(B).
@@ -53,11 +45,9 @@ winning_row([x|Xs]) :- winning_row(Xs), !.
 winning_board_([R])    :- winning_row(R).
 winning_board_([R|Rs]) :- winning_row(R); winning_board_(Rs), !.
 
-winning_board(B, true) :-
+winning_board(B) :-
 	winning_board_(B);
 	transpose(B, B2), winning_board_(B2).
-
-winning_board(_, false).
 
 score_row([], 0).
 score_row([x|Xs], S) :- score_row(Xs, S), !.
@@ -77,7 +67,7 @@ win_score(Draw, Win, Score) :-
 	Score is Draw * S.
 
 wins(Draw, Boards, BoardsLeft, Scores) :-
-	tfilter(winning_board, Boards, Wins),
+	include(winning_board, Boards, Wins),
 	maplist(win_score(Draw), Wins, Scores),
 	foldl(select, Wins, Boards, BoardsLeft).
 
@@ -120,5 +110,6 @@ main :-
 	part1(Draw, Boards, Part1),
 	write('Part 1 : '), write(Part1), nl,
 	part2(Draw, Boards, Part2),
-	write('Part 2 : '), write(Part2), nl.
+	write('Part 2 : '), write(Part2), nl,
+	halt(0).
 
