@@ -8,6 +8,13 @@ def parse(line):
         return "dot", dot[0], dot[1]
 
 
+def parse_data(input):
+    data = [parse(line) for line in input.split('\n') if line.strip() != '']
+    dots = [(x,y) for t, x, y in data if t == 'dot']
+    folds = [(a, c) for t, a, c in data if t == 'fold']
+    return dots, folds
+
+
 def fold(f, a):
     return a if a < f else 2*f-a
 
@@ -19,11 +26,26 @@ def apply_fold(dots, axis, coord):
         yield from ((x, fold(coord, y)) for (x,y) in dots)
     
 
-def part1(data):
-    dots = [(x,y) for t, x, y in data if t == 'dot']
-    fold = [(a, c) for t, a, c in data if t == 'fold'][0]
-    folded = set(apply_fold(dots, *fold))
+def part1(dots, folds):
+    folded = set(apply_fold(dots, *folds[0]))
     return len(folded)
+
+
+def part2(dots, folds):
+    for fold in folds:
+        dots = set(apply_fold(dots, *fold))
+    return dots
+
+def draw(dots):
+    minx = min(x for x,_ in dots)
+    maxx = max(x for x,_ in dots)
+    miny = min(y for _,y in dots)
+    maxy = max(y for _,y in dots)
+    for y in range(miny, maxy+1):
+        line = ''
+        for x in range(minx, maxx+1):
+            line += '#' if (x, y) in dots else '.'
+        yield line
 
 
 test_input = """
@@ -50,17 +72,19 @@ fold along y=7
 fold along x=5
 """
 
-if __name__ == "__main__":
-    test_data = [parse(line) 
-        for line in test_input.split('\n')
-        if line.strip() != ''
-    ]
-    assert test_data[0] == ('dot', 6, 10)
-    assert test_data[-1] == ('fold', 'x', 5)
-    assert part1(test_data) == 17
+def tests():
+    dots, folds = parse_data(test_input)
+    assert dots[0] == ('dot', 6, 10)
+    assert folds[-1] == ('fold', 'x', 5)
+    assert part1(dots, folds) == 17
+    image = list(draw(part2(dots, folds)))
+    assert image == ['#####','#...#','#...#','#...#','#####','.....','.....']
 
-    input = [parse(line) 
-        for line in open('input.txt').readlines()
-        if line.strip() != ''
-    ]
-    print("Part 1: ", part1(input))
+
+if __name__ == "__main__":
+    dots, folds = parse_data(open('input.txt').read())
+    print("Part 1: ", part1(dots, folds))
+    
+    for line in draw(part2(dots, folds)):
+        print(line)
+    
