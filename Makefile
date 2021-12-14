@@ -66,3 +66,12 @@ day10: day10/day10.py
 
 day11: day11/day11.run
 	$^
+
+day12/input.pl: day12/input.txt day12/make_rules.py
+	python3 day12/make_rules.py <$^ >$@
+
+.PHONY: day12
+day12: day12/day12.pl day12/lib.pl day12/input.pl
+	(cd $@; \
+		swipl -g run_tests -t halt lib.plt; \
+		swipl -f -q day12.pl)
