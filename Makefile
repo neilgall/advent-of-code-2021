@@ -79,3 +79,6 @@ day12: day12/day12.pl day12/lib.pl day12/input.pl
 .PHONY: day13
 day13: day13/day13.py
 	(cd $@; python3 $@.py)
+
+day14: day14/day14.run
+	$^
