@@ -74,4 +74,4 @@ day12/input.pl: day12/input.txt day12/make_rules.py
 day12: day12/day12.pl day12/lib.pl day12/input.pl
 	(cd $@; \
 		swipl -g run_tests -t halt lib.plt; \
-		swipl -f -q day12.pl)
+		swipl -f -q -g main day12.pl)

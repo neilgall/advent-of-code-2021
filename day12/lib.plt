@@ -1,23 +1,11 @@
 :- begin_tests(lib).
 :- consult(lib).
-
-cave(start, small).
-cave(end, small).
-cave(a, big).
-cave(b, small).
-cave(c, small).
-cave(d, small).
-
-edge(start, a).
-edge(start, b).
-edge(a, c).
-edge(a, b).
-edge(b, d).
-edge(a, end).
-edge(b, end).
+:- consult(testdata).
 
 test(find_route) :-
-	findall(R, find_route(start, end, R), Rs),
-	length(Rs, 10).
+	find_number_of_routes(start, end, 10).
+
+test(find_route_visiting_one_small_cave_twice) :-
+	find_number_of_routes_visiting_one_small_cave_twice(start, end, 36).
 
 :- end_tests(lib).
