@@ -75,3 +75,7 @@ day12: day12/day12.pl day12/lib.pl day12/input.pl
 	(cd $@; \
 		swipl -g run_tests -t halt lib.plt; \
 		swipl -f -q -g main day12.pl)
+
+.PHONY: day13
+day13: day13/day13.py
+	(cd $@; python3 $@.py)
