@@ -1,5 +1,6 @@
 use std::cmp::min;
 use std::collections::HashSet;
+use std::ops::{Index,IndexMut};
 
 // -- model
 
@@ -7,31 +8,82 @@ type Dimension = i32;
 type Coordinate = i32;
 type Risk = u32;
 
-#[derive(Clone,Debug)]
-struct Map {
-    cells: Vec<Vec<Risk>>,
-    multiplier: Dimension,
-    height: Dimension,
-    width: Dimension
-}
-
 #[derive(Copy,Clone,Debug,Eq,Hash,PartialEq)]
 struct Pos {
     pub x: Coordinate,
     pub y: Coordinate
 }
 
-impl Map {
-    fn new(width: Dimension, height: Dimension, default: Risk) -> Self {
-        let mut cells: Vec<Vec<Risk>> = Vec::with_capacity(height as usize);
-        for _ in 0..height {
-            let mut row: Vec<Risk> = Vec::with_capacity(width as usize);
-            for _ in 0..width {
-                row.push(default);
-            }
-            cells.push(row);
-        }
-        Map { cells, width, height, multiplier: 1 }
+#[derive(Clone,Debug)]
+struct Map<T> {
+    cells: Vec<Vec<T>>,
+    height: Dimension,
+    width: Dimension
+}
+
+#[derive(Clone,Debug)]
+struct TiledMap {
+    cells: Vec<Vec<Risk>>,
+    multiplier: Dimension,
+    height: Dimension,
+    width: Dimension
+}
+
+impl Pos {
+    fn neighbours(&self) -> impl Iterator<Item = Pos> + '_ {
+        vec![
+            Pos { x: self.x, y: self.y - 1 },
+            Pos { x: self.x, y: self.y + 1 },
+            Pos { x: self.x - 1, y: self.y },
+            Pos { x: self.x + 1, y: self.y }
+        ].into_iter()
+    }
+}
+
+impl<T: Clone> Map<T> {
+    fn new(width: Dimension, height: Dimension, default: T) -> Self {
+        let row: Vec<T> = vec![default; width as usize];
+        let cells: Vec<Vec<T>> = vec![row; height as usize];
+        Map { cells, width, height }
+    }
+
+    fn contains(&self, p: &Pos) -> bool {
+        0 <= p.x && 0 <= p.y && p.x < self.width && p.y < self.height
+    }    
+
+    fn iter(&self) -> impl Iterator<Item = Pos> + '_ {
+        (0..self.height).flat_map(move |y|
+            (0..self.width).map(move |x| Pos { x, y })
+        )
+    }
+}
+
+impl<T: Clone> Index<&Pos> for Map<T> {
+    type Output = T;
+
+    fn index(&self, p: &Pos) -> &Self::Output {
+        assert!(self.contains(p));
+        &self.cells[p.y as usize][p.x as usize]
+    }
+}
+
+impl<T: Clone> IndexMut<&Pos> for Map<T> {
+    fn index_mut(&mut self, p: &Pos) -> &mut Self::Output {
+        assert!(self.contains(p));
+        &mut self.cells[p.y as usize][p.x as usize]
+    }
+}
+
+impl TiledMap {
+    fn parse(input: &str, multiplier: Dimension) -> Self {
+        let cells: Vec<Vec<Risk>> = input.lines().map(|line|
+            line.chars().map(|c|
+                (c as Risk) - ('0' as Risk)
+            ).collect()
+        ).collect();
+        let height = cells.len() as Dimension;
+        let width = cells.iter().map(|row| row.len()).max().unwrap() as Dimension;
+        TiledMap { cells, width, height, multiplier }
     }
 
     fn effective_width(&self) -> Dimension {
@@ -49,6 +101,12 @@ impl Map {
             && p.y < self.effective_height()
     }
 
+    fn iter(&self) -> impl Iterator<Item = Pos> + '_ {
+        (0..self.effective_height()).flat_map(move |y|
+            (0..self.effective_width()).map(move |x| Pos { x, y })
+        )
+    }
+
     fn at(&self, p: &Pos) -> Risk {
         assert!(self.contains(p));
         let r = self.cells[(p.y % self.height) as usize][(p.x % self.width) as usize]
@@ -62,52 +120,6 @@ impl Map {
             r % 9 
         }
     }
-
-    fn set_at(&mut self, p: &Pos, value: Risk) {
-        assert!(self.multiplier == 1);
-        assert!(self.contains(p));
-        self.cells[p.y as usize][p.x as usize] = value;
-    }
-
-    fn iter(&self) -> impl Iterator<Item = Pos> + '_ {
-        (0..self.effective_height()).flat_map(move |y|
-            (0..self.effective_width()).map(move |x| Pos { x, y })
-        )
-    }
-
-    fn parse(input: &str, multiplier: Dimension) -> Self {
-        let cells: Vec<Vec<Risk>> = input.lines().map(|line|
-            line.chars().map(|c|
-                (c as Risk) - ('0' as Risk)
-            ).collect()
-        ).collect();
-        let height = cells.len() as Dimension;
-        let width = cells.iter().map(|row| row.len()).max().unwrap() as Dimension;
-        Map { cells, width, height, multiplier }
-    }
-}
-
-
-impl Pos {
-    fn up(&self) -> Pos {
-        Pos { x: self.x, y: self.y - 1 }
-    }
-    
-    fn down(&self) -> Pos {
-        Pos { x: self.x, y: self.y + 1 }
-    }
-    
-    fn left(&self) -> Pos {
-        Pos { x: self.x - 1, y: self.y }
-    }
-
-    fn right(&self) -> Pos {
-        Pos { x: self.x + 1, y: self.y }
-    }
-
-    fn neighbours(&self) -> impl Iterator<Item = Pos> + '_ {
-        vec![self.up(), self.down(), self.left(), self.right()].into_iter()
-    }
 }
 
 fn pos(x: Coordinate, y: Coordinate) -> Pos {
@@ -116,46 +128,47 @@ fn pos(x: Coordinate, y: Coordinate) -> Pos {
 
 // -- problems
 
-fn dijkstra(map: &Map, from: Pos, to: Pos) -> Risk {
-    let mut risks: Map = Map::new(
+fn dijkstra(map: &TiledMap, from: Pos, to: Pos) -> Risk {
+    let mut risks: Map<Risk> = Map::new(
         map.effective_width(), map.effective_height(), Risk::max_value()
     );
     let mut unvisited: HashSet<Pos> = risks.iter().collect();
-    risks.set_at(&from, 0);
+    println!("{:?} unvisited locations", unvisited.len());
+    risks[&from] = 0;
 
     let mut current = from;
     while current != to {
         unvisited.remove(&current);
-        let current_risk = risks.at(&current);
+        let current_risk = risks[&current];
 
         let neighbours: Vec<Pos> = current.neighbours()
             .filter(|n| unvisited.contains(n))
             .collect();
 
         neighbours.iter().for_each(|n| {
-            let total_risk = current_risk + map.at(&n);
-            risks.set_at(&n, min(total_risk, risks.at(&n)));
+            let total_risk = current_risk + map.at(n);
+            risks[n] = min(total_risk, risks[n]);
         });
         
         current = *unvisited.iter()
-            .map(|p| (p, risks.at(&p)))
+            .map(|p| (p, risks[p]))
             .min_by(|a, b| a.1.cmp(&b.1))
             .map(|(p, _)| p)
             .unwrap();
     }
 
-    risks.at(&to)
+    risks[&to]
 }
 
 fn part1(input: &str) -> Risk {
-    let map = Map::parse(&input, 1);
+    let map = TiledMap::parse(&input, 1);
     let start = pos(0, 0);
     let end = pos(map.effective_width()-1, map.effective_height()-1);
     dijkstra(&map, start, end)
 }
 
 fn part2(input: &str) -> Risk {
-    let map = Map::parse(&input, 5);
+    let map = TiledMap::parse(&input, 5);
     let start = pos(0, 0);
     let end = pos(map.effective_width()-1, map.effective_height()-1);
     dijkstra(&map, start, end)
@@ -188,8 +201,8 @@ mod tests {
     }
 
     #[test]
-    fn test_access_map() {
-        let map = Map::parse(example_input(), 5);
+    fn test_access_tiled_map() {
+        let map = TiledMap::parse(example_input(), 5);
         assert_eq!(map.effective_width(), 50);
         assert_eq!(map.effective_height(), 50);
         assert_eq!(map.at(&pos(0, 0)), 1);
@@ -210,7 +223,7 @@ mod tests {
 
     #[test]
     fn test_bounds_checks() {
-        let map = Map::parse(example_input(), 1);
+        let map = TiledMap::parse(example_input(), 1);
         assert_eq!(map.contains(&pos(0, 0)), true);
         assert_eq!(map.contains(&pos(9, 9)), true);
         assert_eq!(map.contains(&pos(-1, 0)), false);
@@ -221,7 +234,7 @@ mod tests {
 
     #[test]
     fn test_bounds_checks_with_multiplier() {
-        let map = Map::parse(example_input(), 5);
+        let map = TiledMap::parse(example_input(), 5);
         assert_eq!(map.contains(&pos(0, 0)), true);
         assert_eq!(map.contains(&pos(49, 49)), true);
         assert_eq!(map.contains(&pos(-1, 0)), false);
