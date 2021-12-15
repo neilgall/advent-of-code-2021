@@ -8,10 +8,11 @@ type Coordinate = i32;
 type Risk = u32;
 
 #[derive(Clone,Debug)]
-struct Map<T> {
-    cells: Vec<Vec<T>>,
-    pub height: Dimension,
-    pub width: Dimension
+struct Map {
+    cells: Vec<Vec<Risk>>,
+    multiplier: Dimension,
+    height: Dimension,
+    width: Dimension
 }
 
 #[derive(Copy,Clone,Debug,Eq,Hash,PartialEq)]
@@ -20,42 +21,61 @@ struct Pos {
     pub y: Coordinate
 }
 
-impl<T: Copy> Map<T> {
-    fn new(width: Dimension, height: Dimension, default: T) -> Self {
-        let mut cells: Vec<Vec<T>> = Vec::with_capacity(height as usize);
+impl Map {
+    fn new(width: Dimension, height: Dimension, default: Risk) -> Self {
+        let mut cells: Vec<Vec<Risk>> = Vec::with_capacity(height as usize);
         for _ in 0..height {
-            let mut row: Vec<T> = Vec::with_capacity(width as usize);
+            let mut row: Vec<Risk> = Vec::with_capacity(width as usize);
             for _ in 0..width {
                 row.push(default);
             }
             cells.push(row);
         }
-        Map { cells, width, height }
+        Map { cells, width, height, multiplier: 1 }
+    }
+
+    fn effective_width(&self) -> Dimension {
+        self.width * self.multiplier
+    }
+
+    fn effective_height(&self) -> Dimension {
+        self.height * self.multiplier
     }
 
     fn contains(&self, p: &Pos) -> bool {
-        0 <= p.x && 0 <= p.y && p.x < self.width && p.y < self.height
+        0 <= p.x 
+            && 0 <= p.y
+            && p.x < self.effective_width()
+            && p.y < self.effective_height()
     }
 
-    fn at(&self, p: &Pos) -> T {
+    fn at(&self, p: &Pos) -> Risk {
         assert!(self.contains(p));
-        self.cells[p.y as usize][p.x as usize]
+        let r = self.cells[(p.y % self.height) as usize][(p.x % self.width) as usize]
+                + (p.x / self.width) as Risk
+                + (p.y / self.height) as Risk;
+        if self.multiplier == 1 {
+            r
+        } else if r % 9 == 0 { 
+            9
+        } else { 
+            r % 9 
+        }
     }
 
-    fn set_at(&mut self, p: &Pos, value: T) {
+    fn set_at(&mut self, p: &Pos, value: Risk) {
+        assert!(self.multiplier == 1);
         assert!(self.contains(p));
         self.cells[p.y as usize][p.x as usize] = value;
     }
 
     fn iter(&self) -> impl Iterator<Item = Pos> + '_ {
-        (0..self.height).flat_map(move |y|
-            (0..self.width).map(move |x| Pos { x, y })
+        (0..self.effective_height()).flat_map(move |y|
+            (0..self.effective_width()).map(move |x| Pos { x, y })
         )
     }
-}
 
-impl Map<Risk> {
-    fn parse(input: &str) -> Self {
+    fn parse(input: &str, multiplier: Dimension) -> Self {
         let cells: Vec<Vec<Risk>> = input.lines().map(|line|
             line.chars().map(|c|
                 (c as Risk) - ('0' as Risk)
@@ -63,7 +83,7 @@ impl Map<Risk> {
         ).collect();
         let height = cells.len() as Dimension;
         let width = cells.iter().map(|row| row.len()).max().unwrap() as Dimension;
-        Map { cells, width, height }
+        Map { cells, width, height, multiplier }
     }
 }
 
@@ -96,18 +116,20 @@ fn pos(x: Coordinate, y: Coordinate) -> Pos {
 
 // -- problems
 
-fn dijkstra(map: &Map<Risk>, from: Pos, to: Pos) -> Risk {
-    let mut risks: Map<Risk> = Map::new(map.width, map.height, Risk::max_value());
+fn dijkstra(map: &Map, from: Pos, to: Pos) -> Risk {
+    let mut risks: Map = Map::new(
+        map.effective_width(), map.effective_height(), Risk::max_value()
+    );
     let mut unvisited: HashSet<Pos> = risks.iter().collect();
     risks.set_at(&from, 0);
 
     let mut current = from;
-    while current != to && unvisited.contains(&current) {
+    while current != to {
         unvisited.remove(&current);
         let current_risk = risks.at(&current);
 
         let neighbours: Vec<Pos> = current.neighbours()
-            .filter(|n| map.contains(n) && unvisited.contains(n))
+            .filter(|n| unvisited.contains(n))
             .collect();
 
         neighbours.iter().for_each(|n| {
@@ -125,18 +147,26 @@ fn dijkstra(map: &Map<Risk>, from: Pos, to: Pos) -> Risk {
     risks.at(&to)
 }
 
-fn part1(map: &Map<Risk>) -> Risk {
+fn part1(input: &str) -> Risk {
+    let map = Map::parse(&input, 1);
     let start = pos(0, 0);
-    let end = pos(map.width-1, map.height-1);
-    dijkstra(map, start, end)
+    let end = pos(map.effective_width()-1, map.effective_height()-1);
+    dijkstra(&map, start, end)
+}
+
+fn part2(input: &str) -> Risk {
+    let map = Map::parse(&input, 5);
+    let start = pos(0, 0);
+    let end = pos(map.effective_width()-1, map.effective_height()-1);
+    dijkstra(&map, start, end)
 }
 
 fn main() {
     let input = std::fs::read_to_string("./input.txt")
         .expect("can't load input.txt");
-    let map = Map::parse(&input);
 
-    println!("Part 1: {:?}", part1(&map));
+    println!("Part 1: {:?}", part1(&input));
+    println!("Part 2: {:?}", part2(&input));
 }
 
 
@@ -158,19 +188,29 @@ mod tests {
     }
 
     #[test]
-    fn test_new_map() {
-        let map = Map::parse(example_input());
-        assert_eq!(map.height, 10);
-        assert_eq!(map.width, 10);
+    fn test_access_map() {
+        let map = Map::parse(example_input(), 5);
+        assert_eq!(map.effective_width(), 50);
+        assert_eq!(map.effective_height(), 50);
         assert_eq!(map.at(&pos(0, 0)), 1);
         assert_eq!(map.at(&pos(9, 0)), 2);
         assert_eq!(map.at(&pos(0, 9)), 2);
         assert_eq!(map.at(&pos(9, 9)), 1);
+        assert_eq!(map.at(&pos(9, 2)), 8);
+
+        assert_eq!(map.at(&pos(10, 10)), 3);
+        assert_eq!(map.at(&pos(19, 10)), 4);
+        assert_eq!(map.at(&pos(10, 19)), 4);
+        assert_eq!(map.at(&pos(19, 19)), 3);
+
+        assert_eq!(map.at(&pos(19, 2)), 9);
+        assert_eq!(map.at(&pos(29, 2)), 1);
+        assert_eq!(map.at(&pos(19, 12)), 1);
     }
 
     #[test]
     fn test_bounds_checks() {
-        let map = Map::parse(example_input());
+        let map = Map::parse(example_input(), 1);
         assert_eq!(map.contains(&pos(0, 0)), true);
         assert_eq!(map.contains(&pos(9, 9)), true);
         assert_eq!(map.contains(&pos(-1, 0)), false);
@@ -180,9 +220,24 @@ mod tests {
     }
 
     #[test]
+    fn test_bounds_checks_with_multiplier() {
+        let map = Map::parse(example_input(), 5);
+        assert_eq!(map.contains(&pos(0, 0)), true);
+        assert_eq!(map.contains(&pos(49, 49)), true);
+        assert_eq!(map.contains(&pos(-1, 0)), false);
+        assert_eq!(map.contains(&pos(0, -1)), false);
+        assert_eq!(map.contains(&pos(50, 0)), false);
+        assert_eq!(map.contains(&pos(0, 50)), false);
+    }
+
+    #[test]
     fn test_part1() {
-        let map = Map::parse(example_input());
-        assert_eq!(part1(&map), 40);
+        assert_eq!(part1(example_input()), 40);
+    }
+
+    #[test]
+    fn test_part2() {
+        assert_eq!(part2(example_input()), 315);
     }
 
 }
