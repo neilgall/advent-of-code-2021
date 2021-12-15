@@ -10,6 +10,9 @@ clean:
 	-find . -name *.run -exec rm -f {} \;
 	-find . -name *.o -exec rm -f {} \;
 	-find . -name .venv -exec rm -rf {} \;
+	-for day in `find . -name Cargo.toml`; do \
+		cd `dirname $$day` && cargo clean; \
+	 done
 
 
 # C build/run rules
@@ -82,3 +85,7 @@ day13: day13/day13.py
 
 day14: day14/day14.run
 	$^
+
+.PHONY: day15
+day15:
+	(cd day15; cargo test && cargo run --release)
