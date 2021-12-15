@@ -1,6 +1,5 @@
 use std::cmp::min;
-use std::collections::HashSet;
-use std::ops::{Index,IndexMut};
+use std::collections::HashMap;
 
 // -- model
 
@@ -12,13 +11,6 @@ type Risk = u32;
 struct Pos {
     pub x: Coordinate,
     pub y: Coordinate
-}
-
-#[derive(Clone,Debug)]
-struct Map<T> {
-    cells: Vec<Vec<T>>,
-    height: Dimension,
-    width: Dimension
 }
 
 #[derive(Clone,Debug)]
@@ -37,40 +29,6 @@ impl Pos {
             Pos { x: self.x - 1, y: self.y },
             Pos { x: self.x + 1, y: self.y }
         ].into_iter()
-    }
-}
-
-impl<T: Clone> Map<T> {
-    fn new(width: Dimension, height: Dimension, default: T) -> Self {
-        let row: Vec<T> = vec![default; width as usize];
-        let cells: Vec<Vec<T>> = vec![row; height as usize];
-        Map { cells, width, height }
-    }
-
-    fn contains(&self, p: &Pos) -> bool {
-        0 <= p.x && 0 <= p.y && p.x < self.width && p.y < self.height
-    }    
-
-    fn iter(&self) -> impl Iterator<Item = Pos> + '_ {
-        (0..self.height).flat_map(move |y|
-            (0..self.width).map(move |x| Pos { x, y })
-        )
-    }
-}
-
-impl<T: Clone> Index<&Pos> for Map<T> {
-    type Output = T;
-
-    fn index(&self, p: &Pos) -> &Self::Output {
-        assert!(self.contains(p));
-        &self.cells[p.y as usize][p.x as usize]
-    }
-}
-
-impl<T: Clone> IndexMut<&Pos> for Map<T> {
-    fn index_mut(&mut self, p: &Pos) -> &mut Self::Output {
-        assert!(self.contains(p));
-        &mut self.cells[p.y as usize][p.x as usize]
     }
 }
 
@@ -129,35 +87,31 @@ fn pos(x: Coordinate, y: Coordinate) -> Pos {
 // -- problems
 
 fn dijkstra(map: &TiledMap, from: Pos, to: Pos) -> Risk {
-    let mut risks: Map<Risk> = Map::new(
-        map.effective_width(), map.effective_height(), Risk::max_value()
-    );
-    let mut unvisited: HashSet<Pos> = risks.iter().collect();
-    println!("{:?} unvisited locations", unvisited.len());
-    risks[&from] = 0;
+    let mut unvisited: HashMap<Pos, Risk> = 
+        map.iter().map(|pos| (pos, Risk::max_value())).collect();
+
+    unvisited.insert(from, 0);
 
     let mut current = from;
     while current != to {
-        unvisited.remove(&current);
-        let current_risk = risks[&current];
+        let current_risk = unvisited.remove(&current).unwrap();
 
         let neighbours: Vec<Pos> = current.neighbours()
-            .filter(|n| unvisited.contains(n))
+            .filter(|n| unvisited.contains_key(n))
             .collect();
 
         neighbours.iter().for_each(|n| {
             let total_risk = current_risk + map.at(n);
-            risks[n] = min(total_risk, risks[n]);
+            unvisited.insert(*n, min(total_risk, unvisited[n]));
         });
         
         current = *unvisited.iter()
-            .map(|p| (p, risks[p]))
             .min_by(|a, b| a.1.cmp(&b.1))
-            .map(|(p, _)| p)
-            .unwrap();
+            .unwrap()
+            .0;
     }
 
-    risks[&to]
+    unvisited[&to]
 }
 
 fn part1(input: &str) -> Risk {
