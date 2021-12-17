@@ -38,8 +38,8 @@ probe_hits_target(probe(Pos, Velocity), Target, MaxY) :-
     MaxY #= max(Y, MaxY1).
 
 velocities_hitting_target(Target, MaxY, velocity(VX, VY)) :-
-    between(0, 20, VX),
-    between(1, 200, VY),
+    between(0, 184, VX),
+    between(-125, 200, VY),
     probe_hits_target(probe(pos(0,0),velocity(VX,VY)), Target, MaxY).
 
 find_velocity_for_max_height(Target, MaxY, Velocity) :-
@@ -48,6 +48,13 @@ find_velocity_for_max_height(Target, MaxY, Velocity) :-
             Solutions),
     sort(1, @>, Solutions, Results),
     Results = [result(MaxY, Velocity)|_].
+
+
+count_velocities_hitting_target(Target, Count) :-
+    findall(result(MaxY, Velocity),
+            velocities_hitting_target(Target, MaxY, Velocity),
+            Solutions),
+    length(Solutions, Count).
 
 
 example_target(Target) :-
@@ -61,6 +68,8 @@ main :-
     day17_target(T),
     find_velocity_for_max_height(T, MaxY, _),
     write("Part 1 "), write(MaxY), nl,
+    count_velocities_hitting_target(T, Count),
+    write("Part 2 "), write(Count), nl,
     halt(0).
 
 
@@ -115,5 +124,10 @@ test(find_velocity_for_max_height) :-
     find_velocity_for_max_height(T, MaxY, Velocity),
     MaxY = 45,
     Velocity = velocity(6, 9).
+
+test(count_velocities_hitting_target) :-
+    example_target(T),
+    count_velocities_hitting_target(T, 112).
+
 
 :- end_tests(day17).
