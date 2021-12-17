@@ -93,3 +93,8 @@ day15:
 .PHONY: day16
 day16: day16/.venv day16/day16.py
 	(cd $@; .venv/bin/pytest -v $@.py; .venv/bin/python $@.py)
+
+.PHONY: day17
+day17: day17/day17.pl
+	(cd $@; \
+		swipl -g run_tests -t halt day17.pl)
