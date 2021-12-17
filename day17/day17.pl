@@ -1,4 +1,4 @@
-:- use_module(library(clpfd)).
+    :- use_module(library(clpfd)).
 
 pos_in_target(pos(X,Y), target(pos(X1,Y1), pos(X2,Y2))) :-
     X1 #=< X, X #=< X2,
@@ -30,20 +30,38 @@ probe_hits_target(probe(Pos, _), Target, MaxY) :-
     Pos = pos(_, MaxY),
     !.
 
-probe_hits_target(Probe, Target, MaxY) :-
-    probe(Pos,_) = Probe,
+probe_hits_target(probe(Pos, Velocity), Target, MaxY) :-
     \+ pos_beyond_target(Pos, Target),
-    probe_step(Probe, Next),
+    probe_step(probe(Pos, Velocity), Next),
     probe_hits_target(Next, Target, MaxY1),
-    pos(_, Y) = Pos,
+    Pos = pos(_, Y),
     MaxY #= max(Y, MaxY1).
 
+velocities_hitting_target(Target, MaxY, velocity(VX, VY)) :-
+    between(0, 20, VX),
+    between(1, 200, VY),
+    probe_hits_target(probe(pos(0,0),velocity(VX,VY)), Target, MaxY).
 
-find_velocity_for_max_height(Target, MaxY, velocity(VX, VY)) :-
-    VX in 0..10,
-    VY in 0..50,
-    probe_hits_target(probe(pos(0,0),velocity(VX,VY)), Target, MaxY),
-    labeling([max(MaxY)], [VX,VY]).
+find_velocity_for_max_height(Target, MaxY, Velocity) :-
+    findall(result(MaxY, Velocity),
+            velocities_hitting_target(Target, MaxY, Velocity),
+            Solutions),
+    sort(1, @>, Solutions, Results),
+    Results = [result(MaxY, Velocity)|_].
+
+
+example_target(Target) :-
+    Target = target(pos(20,-10),pos(30,-5)).
+
+day17_target(Target) :-
+    Target = target(pos(138,-125),pos(184,-71)).
+
+
+main :- 
+    day17_target(T),
+    find_velocity_for_max_height(T, MaxY, _),
+    write("Part 1 "), write(MaxY), nl,
+    halt(0).
 
 
 :- begin_tests(day17).
@@ -72,24 +90,30 @@ test(in_target_arithmetic) :-
     \+ pos_in_target(pos(12,16), T).
 
 test(beyond_target_arithmetic) :-
-    T = target(pos(20,-10),pos(30,-5)),
+    example_target(T),
     pos_beyond_target(pos(31,-7), T),
     pos_beyond_target(pos(25,-11), T),
     \+ pos_beyond_target(pos(25,-4), T),
     \+ pos_beyond_target(pos(15,-7), T).    
 
 test(probe_hits_target) :-
-    T = target(pos(20,-10),pos(30,-5)),
+    example_target(T),
     probe_hits_target(probe(pos(0,0),velocity(7,2)), T, _),
     probe_hits_target(probe(pos(0,0),velocity(6,3)), T, _),
     probe_hits_target(probe(pos(0,0),velocity(9,0)), T, _).
 
 test(probe_misses_target) :-
-    T = target(pos(20,-10),pos(30,-5)),
+    example_target(T),
     \+ probe_hits_target(probe(pos(0,0),velocity(17,-4)), T, _).
 
 test(maximum_y) :-
-    T = target(pos(20,-10),pos(30,-5)),
+    example_target(T),
     probe_hits_target(probe(pos(0,0),velocity(6,9)), T, 45).    
+
+test(find_velocity_for_max_height) :-
+    example_target(T),
+    find_velocity_for_max_height(T, MaxY, Velocity),
+    MaxY = 45,
+    Velocity = velocity(6, 9).
 
 :- end_tests(day17).
