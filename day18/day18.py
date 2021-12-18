@@ -110,9 +110,22 @@ def magnitude(snailfish):
         return 3*magnitude(snailfish[0]) + 2*magnitude(snailfish[1])
 
 
-def part1(*args):
-    sum = sum_list(flatten(n) for n in args)
+def part1(snailfish_list):
+    sum = sum_list(flatten(n) for n in snailfish_list)
     return magnitude(unflatten(sum))
+
+
+def part2(snailfish_list):
+    largest = 0
+    ns = [flatten(n) for n in snailfish_list]
+    for i, n in enumerate(ns):
+        for m in ns[i+1:]:
+            largest = max(
+                largest,
+                magnitude(unflatten(add(n, m))),
+                magnitude(unflatten(add(m, n)))
+            )
+    return largest
 
 
 @pytest.mark.parametrize('input,output', [
@@ -206,22 +219,28 @@ def test_magnitude(snailfish, expect):
     assert magnitude(snailfish) == expect
 
 
+HOMEWORK = [
+    [[[0,[5,8]],[[1,7],[9,6]]],[[4,[1,2]],[[1,4],2]]],
+    [[[5,[2,8]],4],[5,[[9,9],0]]],
+    [6,[[[6,2],[5,6]],[[7,6],[4,7]]]],
+    [[[6,[0,7]],[0,9]],[4,[9,[9,0]]]],
+    [[[7,[6,4]],[3,[1,3]]],[[[5,5],1],9]],
+    [[6,[[7,3],[3,2]]],[[[3,8],[5,7]],4]],
+    [[[[5,4],[7,7]],8],[[8,3],8]],
+    [[9,3],[[9,9],[6,[4,9]]]],
+    [[2,[[7,7],7]],[[5,8],[[9,3],[0,2]]]],
+    [[[[5,2],5],[8,[3,7]]],[[5,[7,5]],[4,4]]]
+]
+
 def test_part1():
-    result = part1(
-        [[[0,[5,8]],[[1,7],[9,6]]],[[4,[1,2]],[[1,4],2]]],
-        [[[5,[2,8]],4],[5,[[9,9],0]]],
-        [6,[[[6,2],[5,6]],[[7,6],[4,7]]]],
-        [[[6,[0,7]],[0,9]],[4,[9,[9,0]]]],
-        [[[7,[6,4]],[3,[1,3]]],[[[5,5],1],9]],
-        [[6,[[7,3],[3,2]]],[[[3,8],[5,7]],4]],
-        [[[[5,4],[7,7]],8],[[8,3],8]],
-        [[9,3],[[9,9],[6,[4,9]]]],
-        [[2,[[7,7],7]],[[5,8],[[9,3],[0,2]]]],
-        [[[[5,2],5],[8,[3,7]]],[[5,[7,5]],[4,4]]]
-    )
-    assert result == 4140
+    assert part1(HOMEWORK) == 4140
+
+def test_part2():
+    assert part2(HOMEWORK) == 3993
+
 
 if __name__ == "__main__":
     with open("input.txt") as f:
-        input = (eval(line) for line in f.readlines())
-        print("Part 1:", part1(*input))
+        input = [eval(line) for line in f.readlines()]
+        print("Part 1:", part1(input))
+        print("Part 2:", part2(input))
