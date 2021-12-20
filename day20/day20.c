@@ -13,26 +13,6 @@ struct point {
 	int y;
 };
 
-struct point up(struct point p) {
-	struct point up = { .x = p.x, .y = p.y-1 };
-	return up;
-}
-
-struct point down(struct point p) {
-	struct point down = { .x = p.x, .y = p.y+1 };
-	return down;
-}
-
-struct point left(struct point p) {
-	struct point left = { .x = p.x-1, .y = p.y };
-	return left;
-}
-
-struct point right(struct point p) {
-	struct point right = { .x = p.x+1, .y = p.y };
-	return right;
-}
-
 typedef unsigned char pixel_t;
 
 struct enhancement {
