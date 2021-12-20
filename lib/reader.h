@@ -7,6 +7,7 @@ typedef char (*reader_next_f)(struct Reader *);
 
 struct Reader {
 	reader_next_f next;
+	reader_next_f peek;
 	reader_delete_f delete;
 };
 

@@ -103,3 +103,6 @@ day17: day17/day17.pl
 .PHONY: day18
 day18: day18/.venv day18/day18.py
 	(cd $@; .venv/bin/pytest -s -v $@.py; .venv/bin/python $@.py)
+
+day20: day20/day20.run
+	$^
