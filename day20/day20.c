@@ -217,18 +217,27 @@ size_t count_pixels(const struct image *img) {
 }
 
 int part1(const struct input_data *input) {
-    printf("original\n"); print_image(input->image);
     struct image *pass1 = enhance(input->image, input->enhancement);
-    printf("pass 1\n"); print_image(pass1);
     struct image *pass2 = enhance(pass1, input->enhancement);
-    printf("pass 2\n"); print_image(pass2);
     size_t pixels_lit = count_pixels(pass2);
     free(pass1);
     free(pass2);
-    printf("pixels lit %lu\n", pixels_lit);
     return pixels_lit;
 }
 
+
+int part2(const struct input_data *input) {
+    struct image *images[2] = { copy_image(input->image), 0 };
+    size_t index = 0;
+    for (int i = 0; i < 50; ++i) {
+        images[1-index] = enhance(images[index], input->enhancement);
+        free(images[index]);
+        index = 1-index;
+    }
+    size_t pixels_lit = count_pixels(images[index]);
+    free(images[index]);
+    return pixels_lit;
+}
 
 // tests
 
@@ -251,6 +260,7 @@ void tests() {
     struct input_data input;
     read_input(string_reader(test_data), &input);
 	assert(part1(&input) == 35);
+    assert(part2(&input) == 3351);
     free_input_data(&input);
 }
 
@@ -270,6 +280,7 @@ int main() {
     read_input(file_reader("day20/input.txt"), &input);
 
 	printf("Part 1: %lu\n", part1(&input));
+	printf("Part 2: %lu\n", part2(&input));
 	
     free_input_data(&input);
 	return 0;
