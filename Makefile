@@ -106,3 +106,7 @@ day18: day18/.venv day18/day18.py
 
 day20: day20/day20.run
 	$^
+
+.PHONY: day21/
+day21: day21/day21.py
+	python3 $^
