@@ -118,3 +118,6 @@ day21: day21/day21.py
 .PHONY: day22
 day22:
 	(cd day22; cargo test && cargo run --release)
+
+day23: day23/*.pl
+	(cd $@; swipl -g run_tests -t halt lib.pl)
