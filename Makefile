@@ -111,6 +111,10 @@ day19:
 day20: day20/day20.run
 	$^
 
-.PHONY: day21/
+.PHONY: day21
 day21: day21/day21.py
 	python3 $^
+
+.PHONY: day22
+day22:
+	(cd day22; cargo test && cargo run --release)
