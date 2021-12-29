@@ -54,17 +54,17 @@ impl Vector {
         use Axis::*;
         match (rot, axis) {
             (R0,   X) => *self,
-            (R90,  X) => Vector::new( self.x, -self.z,  self.y),
+            (R90,  X) => Vector::new( self.x,  self.z, -self.y),
             (R180, X) => Vector::new( self.x, -self.y, -self.z),
-            (R270, X) => Vector::new( self.x,  self.z, -self.y),
+            (R270, X) => Vector::new( self.x, -self.z,  self.y),
             (R0,   Y) => *self,
-            (R90,  Y) => Vector::new( self.z,  self.y, -self.x),
+            (R90,  Y) => Vector::new(-self.z,  self.y,  self.x),
             (R180, Y) => Vector::new(-self.x,  self.y, -self.z),
-            (R270, Y) => Vector::new(-self.z,  self.y,  self.x),
+            (R270, Y) => Vector::new( self.z,  self.y, -self.x),
             (R0,   Z) => *self,
-            (R90,  Z) => Vector::new(-self.y,  self.x,  self.z),
+            (R90,  Z) => Vector::new( self.y, -self.x,  self.z),
             (R180, Z) => Vector::new(-self.x, -self.y,  self.z),
-            (R270, Z) => Vector::new( self.y, -self.x,  self.z)
+            (R270, Z) => Vector::new(-self.y,  self.x,  self.z)
         }
     }
 }
@@ -111,12 +111,12 @@ lazy_static! {
     static ref ORIENTATIONS: Vec<Orientation> = {
         use Rotation::*;
         let directions = vec![
-            (R0,   R0  ),  // pos X, no rotation
+            (R0,   R0  ),  // pos X = no rotation
             (R90,  R0  ),  // pos Z, 90 around Y
             (R180, R0  ),  // neg X, 180 around Y
             (R270, R0  ),  // neg Z, 270 around Y
-            (R0,   R90 ),  // pos Y, 90 around Z
-            (R0,   R270)   // neg Y, 270 around Z
+            (R0,   R90 ),  // neg Y, 90 around Z
+            (R0,   R270)   // pos Y, 270 around Z
         ];
         
         let mut all: Vec<Orientation> = vec![];
@@ -139,9 +139,9 @@ impl Orientation {
     }
 
     fn normalise(&self, v: Vector) -> Vector {
-        v.rotate(self.rotate_x.reverse(), Axis::X)
-         .rotate(self.rotate_y.reverse(), Axis::Y)
-         .rotate(self.rotate_z.reverse(), Axis::Z)
+        v.rotate(self.rotate_x, Axis::X)
+         .rotate(self.rotate_y, Axis::Y)
+         .rotate(self.rotate_z, Axis::Z)
     }
 }
 
@@ -350,19 +350,19 @@ mod tests {
         assert_eq!(x.rotate(R270, X), x);
 
         assert_eq!(x.rotate(R0,   Y), x);
-        assert_eq!(x.rotate(R90,  Y), Vector::new( 0,  0, -1));
+        assert_eq!(x.rotate(R90,  Y), Vector::new( 0,  0,  1));
         assert_eq!(x.rotate(R180, Y), Vector::new(-1,  0,  0));
-        assert_eq!(x.rotate(R270, Y), Vector::new( 0,  0,  1));
+        assert_eq!(x.rotate(R270, Y), Vector::new( 0,  0, -1));
 
         assert_eq!(x.rotate(R0,   Z), x);
-        assert_eq!(x.rotate(R90,  Z), Vector::new( 0,  1,  0));
+        assert_eq!(x.rotate(R90,  Z), Vector::new( 0, -1,  0));
         assert_eq!(x.rotate(R180, Z), Vector::new(-1,  0,  0));
-        assert_eq!(x.rotate(R270, Z), Vector::new( 0, -1,  0));
+        assert_eq!(x.rotate(R270, Z), Vector::new( 0,  1,  0));
 
         assert_eq!(y.rotate(R0,   X), y);
-        assert_eq!(y.rotate(R90,  X), Vector::new( 0,  0,  1));
+        assert_eq!(y.rotate(R90,  X), Vector::new( 0,  0, -1));
         assert_eq!(y.rotate(R180, X), Vector::new( 0, -1,  0));
-        assert_eq!(y.rotate(R270, X), Vector::new( 0,  0, -1));
+        assert_eq!(y.rotate(R270, X), Vector::new( 0,  0,  1));
 
         assert_eq!(y.rotate(R0,   Y), y);
         assert_eq!(y.rotate(R90,  Y), y);
@@ -370,19 +370,19 @@ mod tests {
         assert_eq!(y.rotate(R270, Y), y);
 
         assert_eq!(y.rotate(R0,   Z), y);
-        assert_eq!(y.rotate(R90,  Z), Vector::new(-1,  0,  0));
+        assert_eq!(y.rotate(R90,  Z), Vector::new( 1,  0,  0));
         assert_eq!(y.rotate(R180, Z), Vector::new( 0, -1,  0));
-        assert_eq!(y.rotate(R270, Z), Vector::new( 1,  0,  0));
+        assert_eq!(y.rotate(R270, Z), Vector::new(-1,  0,  0));
 
         assert_eq!(z.rotate(R0,   X), z);
-        assert_eq!(z.rotate(R90,  X), Vector::new( 0, -1,  0));
+        assert_eq!(z.rotate(R90,  X), Vector::new( 0,  1,  0));
         assert_eq!(z.rotate(R180, X), Vector::new( 0,  0, -1));
-        assert_eq!(z.rotate(R270, X), Vector::new( 0,  1,  0));
+        assert_eq!(z.rotate(R270, X), Vector::new( 0, -1,  0));
 
         assert_eq!(z.rotate(R0,   Y), z);
-        assert_eq!(z.rotate(R90,  Y), Vector::new( 1,  0,  0));
+        assert_eq!(z.rotate(R90,  Y), Vector::new(-1,  0,  0));
         assert_eq!(z.rotate(R180, Y), Vector::new( 0,  0, -1));
-        assert_eq!(z.rotate(R270, Y), Vector::new(-1,  0,  0));
+        assert_eq!(z.rotate(R270, Y), Vector::new( 1,  0,  0));
 
         assert_eq!(z.rotate(R0,   Z), z);
         assert_eq!(z.rotate(R90,  Z), z);
@@ -442,7 +442,7 @@ mod tests {
         );
         assert_eq!(
             scanners[1].locate_relative_to(&scanners[4]).map(|s| s.position()),
-            Some(scanner_0_to_4)
+            Some(scanner_0_to_4 - scanner_0_to_1)
         )
     }
 

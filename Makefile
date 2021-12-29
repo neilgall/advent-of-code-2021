@@ -104,6 +104,10 @@ day17: day17/day17.pl
 day18: day18/.venv day18/day18.py
 	(cd $@; .venv/bin/pytest -s -v $@.py; .venv/bin/python $@.py)
 
+.PHONY: day19
+day19:
+	(cd day19; cargo test && cargo run --release)
+
 day20: day20/day20.run
 	$^
 
