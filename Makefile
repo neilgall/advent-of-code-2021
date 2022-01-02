@@ -121,3 +121,6 @@ day22:
 
 day23: day23/*.pl
 	(cd $@; swipl -g run_tests -t halt lib.pl)
+
+day24: day24/.venv day24/*.py
+	(cd $@; .venv/bin/pytest -s -v $@.py && .venv/bin/python $@.py)
