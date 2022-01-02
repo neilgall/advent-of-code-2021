@@ -117,10 +117,14 @@ day21: day21/day21.py
 
 .PHONY: day22
 day22:
-	(cd day22; cargo test && cargo run --release)
+	(cd $@; cargo test && cargo run --release)
 
 day23: day23/*.pl
 	(cd $@; swipl -g run_tests -t halt lib.pl)
 
 day24: day24/.venv day24/*.py
 	(cd $@; .venv/bin/pytest -s -v $@.py && .venv/bin/python $@.py)
+
+.PHONY: day25
+day25:
+	(cd $@; cargo test && cargo run --release)
